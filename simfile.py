@@ -112,6 +112,11 @@ class Simfile(object):
             return time
 
 def read_sm_simfile(filename):
+    # TODO: be more forgiving?
+    #   - For example, can allow multiple , in a row
+    #   - can also have some tags which are expected to be exactly one
+    #     line for which ; is optional, as that mistake also
+    #     occasionally happens
     pairs = OrderedDict()
     with open(filename, encoding='utf-8') as fin:
         lines = fin.readlines()
