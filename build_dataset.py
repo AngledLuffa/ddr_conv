@@ -123,12 +123,40 @@ def collect_simfiles():
     print("%d simfiles to be used in the dataset" % len(useful_simfiles))
 
     return useful_simfiles, known_simfiles
-    
+
+
+def split_dataset(useful_simfiles, train_size, dev_size, test_size):
+    """
+    Splits the given list into train, dev, test
+
+    Randomly shuffles and then splits the list proportionally based on
+    train_size, dev_size, and test_size
+    """
+    total_size = train_size + dev_size + test_size
+
+    train_cutoff = int(len(useful_simfiles) * train_size / total_size)
+    dev_cutoff = int(len(useful_simfiles) * (train_size + dev_size) / total_size)
+    dataset = list(useful_simfiles)
+    random.shuffle(dataset)
+    train = dataset[:train_cutoff]
+    dev = dataset[train_cutoff:dev_cutoff]
+    test = dataset[dev_cutoff:]
+
+    return train, dev, test
+
+
 if __name__ == '__main__':
     # TODO: add command line args and make the seed a possible arg
     # although it should be noted that the dataset will frequently change.
     # that might make it impossible to reproduce a dataset
     random.seed(10000)
 
+    # make these sizes arguments as well
+    train_size = 0.7
+    dev_size = 0.1
+    test_size = 0.2
+
     useful_simfiles, known_simfiles = collect_simfiles()
+
+    train_files, dev_files, test_files = split_dataset(useful_simfiles, train_size, dev_size, test_size)
 
