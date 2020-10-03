@@ -166,3 +166,12 @@ def read_sm_simfile(filename):
 
     return Simfile(pairs)
 
+
+def read_simfile(filename):
+    extension = os.path.splitext(filename)[1]
+    try:
+        if extension == '.sm':
+            return read_sm_simfile(filename)
+    except ValueError as e:
+        raise ValueError("Could not read %s" % filename) from e
+    raise ValueError("Cannot read simfiles with extension %s" % extension)
