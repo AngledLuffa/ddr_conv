@@ -23,7 +23,7 @@ def numbered_list(value, key_name):
     return pairs
 
 class Simfile(object):
-    def __init__(self, pairs):
+    def __init__(self, pairs, charts):
         """
         Keeps track of a list of key/value pairs for the simfile.
         Also keeps offset/stops/bpms separately to make processing easier.
@@ -32,6 +32,7 @@ class Simfile(object):
         # the items not being kept in the dict.  Perhaps leave empty
         # values in the dict, for example
         self.pairs = OrderedDict(pairs)
+        self.charts = charts
 
         if 'offset' not in pairs:
             raise ValueError('Simfile has no offset')
@@ -122,6 +123,7 @@ def read_sm_simfile(filename):
         lines = fin.readlines()
     key = None
     value = None
+    charts = []
     for line in lines:
         comment = line.find("//")
         if comment >= 0:
@@ -147,10 +149,7 @@ def read_sm_simfile(filename):
         if value_end >= 0:
             value = value + line[:value_end]
             if key.lower() == 'notes':
-                if not 'notes' in pairs:
-                    pairs['notes'] = [value]
-                else:
-                    pairs['notes'].append(value)
+                charts.append(value)
             else:
                 pairs[key.lower()] = value
 
@@ -169,7 +168,7 @@ def read_sm_simfile(filename):
         music_path = os.path.join(os.path.split(filename)[0], filename)
         pairs['music'] = music_path
 
-    return Simfile(pairs)
+    return Simfile(pairs, charts)
 
 
 def read_simfile(filename):
