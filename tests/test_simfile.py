@@ -90,6 +90,7 @@ class TestSimfile(unittest.TestCase):
         assert sim.bpms[0] == (0, 125)
         assert len(sim.stops) == 0
         assert len(sim.charts) == 2
+        assert sim.num_beats() == 8
 
 if __name__ == '__main__':
     unittest.main()

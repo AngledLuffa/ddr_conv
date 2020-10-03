@@ -81,6 +81,9 @@ class Simfile(object):
         self.bpms = numbered_list(bpms, "bpms")
         self.stops = numbered_list(stops, "stops")
 
+    def num_beats(self):
+        return 4 * max(len(x.measures) for x in self.charts)
+            
     def beat(self, time):
         """
         Converts a time to a beat
