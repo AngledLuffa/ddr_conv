@@ -27,9 +27,9 @@ class StepChart(object):
         chart = chart.strip()
         traits = chart.split(":")
         self.game = traits[0]
-        # TODO: seriously, there is no documentation on the format and
-        # I can't find what this particle is supposed to be
-        self.unknown_trait = traits[1]
+        # a possibly user-supplied description of the steps,
+        # often just nothing
+        self.description = traits[1]
         # beginner, hard, etc
         self.difficulty = traits[2]
         # numeric value of the difficulty
