@@ -113,7 +113,7 @@ class Simfile(object):
 
 def read_sm_simfile(filename):
     pairs = OrderedDict()
-    with open(filename) as fin:
+    with open(filename, encoding='utf-8') as fin:
         lines = fin.readlines()
     key = None
     value = None
