@@ -22,6 +22,23 @@ def numbered_list(value, key_name):
         pairs.append(tuple(pieces))
     return pairs
 
+class StepChart(object):
+    def __init__(self, chart):
+        chart = chart.strip()
+        traits = chart.split(":")
+        self.game = traits[0]
+        # TODO: seriously, there is no documentation on the format and
+        # I can't find what this particle is supposed to be
+        self.unknown_trait = traits[1]
+        # beginner, hard, etc
+        self.difficulty = traits[2]
+        # numeric value of the difficulty
+        self.rating = traits[3]
+        self.radar = traits[4]
+        measures = [x.strip() for x in traits[5].strip().split(",")]
+        # TODO: could further pre-process the measures into steps
+        self.measures = measures
+
 class Simfile(object):
     def __init__(self, pairs, charts):
         """
@@ -32,7 +49,7 @@ class Simfile(object):
         # the items not being kept in the dict.  Perhaps leave empty
         # values in the dict, for example
         self.pairs = OrderedDict(pairs)
-        self.charts = charts
+        self.charts = [StepChart(x) for x in charts]
 
         if 'offset' not in pairs:
             raise ValueError('Simfile has no offset')
