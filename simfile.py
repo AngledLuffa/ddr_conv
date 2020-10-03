@@ -17,7 +17,7 @@ def numbered_list(value, key_name):
     for item in items:
         pieces = item.split("=")
         if len(pieces) != 2:
-            raise RuntimeError("Illegal format for %s" % key_name)
+            raise ValueError("Illegal format for %s" % key_name)
         pieces = [float(x.strip()) for x in pieces]
         pairs.append(tuple(pieces))
     return pairs
