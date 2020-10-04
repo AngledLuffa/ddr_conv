@@ -55,6 +55,7 @@ class Simfile(object):
             raise ValueError('Simfile has no offset')
         else:
             self.offset = float(pairs.get('offset'))
+            # D.R.Y.
             del self.pairs['offset']
             
         if 'bpms' not in pairs:
@@ -71,6 +72,9 @@ class Simfile(object):
 
         if 'music' not in pairs:
             raise ValueError('Simfile has no music!')
+        else:
+            self.music = pairs.get('music')
+            del self.pairs['music']
 
     def update_bpms(self, offset, bpms, stops):
         """
@@ -185,7 +189,7 @@ def read_sm_simfile(filename):
     if 'music' not in pairs:
         raise ValueError("Could not find music for simfile %s" % filename)
     else:
-        music_path = os.path.join(os.path.split(filename)[0], filename)
+        music_path = os.path.join(os.path.split(filename)[0], pairs['music'])
         pairs['music'] = music_path
 
     return Simfile(pairs, charts)
