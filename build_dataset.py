@@ -15,6 +15,8 @@ notes on how to build the dataset:
 import os
 import random
 
+import torchaudio
+
 import simfile
 
 extensions = [".ssc", ".sm", ".dwi"]
@@ -91,6 +93,11 @@ def is_useful(sim):
     # TODO: bpms with harmonics of a base BPM should be fine
     if len(sim.bpms) > 1:
         return False
+    # Currently Windows torchaudio is not compatible with mp3.  Either
+    # needs sox or an update to soundfile which includes mp3 support
+    # (such a thing is apparently planned)
+    if os.path.splitext(sim.music)[1] == '.mp3':
+        return False
     return True
 
 def filter_known_types(simfiles):
@@ -122,7 +129,7 @@ def collect_simfiles():
 
     print("%d simfiles to be used in the dataset" % len(useful_simfiles))
 
-    return useful_simfiles, known_simfiles
+    return useful_simfiles, simfile_map
 
 
 def split_dataset(useful_simfiles, train_size, dev_size, test_size):
@@ -145,6 +152,24 @@ def split_dataset(useful_simfiles, train_size, dev_size, test_size):
     return train, dev, test
 
 
+def extract_samples(dataset_files, simfile_map, num_samples):
+    samples = []
+    for file_idx, filename in enumerate(dataset_files):
+        print(filename)
+        sim = simfile_map[filename]
+        audio = torchaudio.load(simfile_map[filename].music)
+        print(filename)
+        print(audio)
+
+        start_sample = len(samples)
+        if file_idx == len(dataset_files) - 1:
+            end_sample = num_samples
+        else:
+            end_sample = int(num_samples * (file_idx + 1) / len(simfile_map))
+        # TODO
+        samples.extend([1234] * (start_sample - end_sample))
+    return samples
+
 if __name__ == '__main__':
     # TODO: add command line args and make the seed a possible arg
     # although it should be noted that the dataset will frequently change.
@@ -156,7 +181,18 @@ if __name__ == '__main__':
     dev_size = 0.1
     test_size = 0.2
 
-    useful_simfiles, known_simfiles = collect_simfiles()
+    # also should be parameters
+    train_samples = 10000
+    dev_samples = 1000
+    test_samples = 2000
+    
+    useful_simfiles, simfile_map = collect_simfiles()
 
+    # we should log the test files so we know which files were
+    # untouched when trying to check whether a model can identify a
+    # correct BPM
     train_files, dev_files, test_files = split_dataset(useful_simfiles, train_size, dev_size, test_size)
 
+    train_set = extract_samples(train_files, simfile_map, train_samples)
+    dev_set = extract_samples(dev_files, simfile_map, dev_samples)
+    test_set = extract_samples(test_files, simfile_map, test_samples)
