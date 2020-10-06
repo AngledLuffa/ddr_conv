@@ -157,11 +157,11 @@ def load_normalized(music_file):
     Normalize in a couple ways: convert to 44100 samples and make
     something fake stereo if needed
     """
-    audio, baud = torchaudio.load(music_file)
+    audio, bitrate = torchaudio.load(music_file)
     print("Audio shape: {}".format(audio.shape))
-    if baud != 44100:
-        print("Converting %s from %d to 44100" % (music_file, baud))
-        transform = torchaudio.transforms.Resample(baud, 44100)
+    if bitrate != 44100:
+        print("Converting %s from %d to 44100" % (music_file, bitrate))
+        transform = torchaudio.transforms.Resample(bitrate, 44100)
         audio = transform(audio)
         print("New shape: {}".format(audio.shape))
 
@@ -181,6 +181,49 @@ def featurize(audio):
     transform = torchaudio.transforms.AmplitudeToDB()
     return transform(audio)
 
+def pick_sample(audio, sim):
+    # skip the last 10 beats to avoid possible silence at the end
+    num_beats = sim.num_beats() - 10
+    
+    min_beat = 10
+    # skip the first 5 seconds in case there's silence or whatever
+    # TODO: there is a method for time -> beat but that is not fully implemented
+    while sim.time(min_beat) < 5:
+        min_beat = min_beat + 10
+        if min_beat > num_beats:
+            raise ValueError("Song too short to be useful")
+
+    # TODO: avoid duplicates
+    random_beat = random.randint(min_beat, num_beats)
+    mode = random.randint(1, 20)
+    if mode <= 10:        
+        # on a beat
+        pass
+    elif mode <= 12:
+        # 8th note
+        random_beat = random_beat + 0.5
+    elif mode == 13:
+        # first 16th note
+        random_beat = random_beat + 0.25
+    elif mode == 14:
+        # third 16th note
+        random_beat = random_beat + 0.75
+    elif mode == 15:
+        # first 12th note
+        random_beat == random_beat + 0.333
+    elif mode == 16:
+        # second 12th note
+        random_beat == random_beat + 0.667
+    else:
+        # random location hopefully far from the real beat
+        random_beat = random_beat + random.randint(50, 950) / 1000
+
+    beat_time = sim.time(random_beat)
+    # all songs have been translated to 44100 bitrate
+    sample = int(beat_time * 44100)
+    return audio[:, sample-4000:sample+4000]
+    
+
 def extract_samples(dataset_files, simfile_map, num_samples):
     samples = []
     for file_idx, filename in enumerate(dataset_files):
@@ -197,9 +240,15 @@ def extract_samples(dataset_files, simfile_map, num_samples):
             end_sample = num_samples
         else:
             end_sample = int(num_samples * (file_idx + 1) / len(simfile_map))
-        # TODO
-        samples.extend([1234] * (start_sample - end_sample))
-    return samples
+
+        for i in range(end_sample - start_sample):
+            samples.append(pick_sample(audio, sim))
+
+    dataset = torch.stack(samples) 
+    print("BUILT DATASET")
+    # TODO: should also have the labels
+    print(dataset.shape)
+    return dataset
 
 if __name__ == '__main__':
     # TODO: add command line args and make the seed a possible arg
