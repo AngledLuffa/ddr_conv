@@ -15,6 +15,7 @@ notes on how to build the dataset:
 import os
 import random
 
+import torch
 import torchaudio
 
 import simfile
@@ -151,15 +152,45 @@ def split_dataset(useful_simfiles, train_size, dev_size, test_size):
 
     return train, dev, test
 
+def load_normalized(music_file):
+    """
+    Normalize in a couple ways: convert to 44100 samples and make
+    something fake stereo if needed
+    """
+    audio, baud = torchaudio.load(music_file)
+    print("Audio shape: {}".format(audio.shape))
+    if baud != 44100:
+        print("Converting %s from %d to 44100" % (music_file, baud))
+        transform = torchaudio.transforms.Resample(baud, 44100)
+        audio = transform(audio)
+        print("New shape: {}".format(audio.shape))
+
+    if audio.shape[0] == 1:
+        # It would appear either the reader is always reading things
+        # in stereo even if they are mono files, or none of the
+        # simfiles I have are mono, because this was never printed
+        print("WARNING: Simfile %s is mono, not stereo" % music_file)
+        audio = torch.cat((audio, audio), 0)
+
+    return audio
+
+def featurize(audio):
+    """
+    TODO: try various other things, such as MelSpectrogram
+    """
+    transform = torchaudio.transforms.AmplitudeToDB()
+    return transform(audio)
 
 def extract_samples(dataset_files, simfile_map, num_samples):
     samples = []
     for file_idx, filename in enumerate(dataset_files):
         print(filename)
+
+        music_file = simfile_map[filename].music
         sim = simfile_map[filename]
-        audio = torchaudio.load(simfile_map[filename].music)
-        print(filename)
-        print(audio)
+        audio = load_normalized(music_file)
+        audio = featurize(audio)
+        print("Featurized shape: {}".format(audio.shape))
 
         start_sample = len(samples)
         if file_idx == len(dataset_files) - 1:
