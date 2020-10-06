@@ -250,6 +250,7 @@ def extract_samples(dataset_files, simfile_map, num_samples):
 
     labels = torch.tensor(labels)
     dataset = torch.stack(samples) 
+    dataset = dataset.unsqueeze(2)
     print("BUILT DATASET")
     print(dataset.shape, labels.shape)
     return dataset, labels
