@@ -200,19 +200,19 @@ def pick_sample(audio, sim):
     if mode <= 10:
         # on a beat
         label = 1
-    elif mode <= 12:
+    elif mode <= 13:
         # 8th note
         random_beat = random_beat + 0.5
-    elif mode == 13:
+    elif mode == 14:
         # first 16th note
         random_beat = random_beat + 0.25
-    elif mode == 14:
+    elif mode == 15:
         # third 16th note
         random_beat = random_beat + 0.75
-    elif mode == 15:
+    elif mode == 16:
         # first 12th note
         random_beat == random_beat + 0.333
-    elif mode == 16:
+    elif mode == 17:
         # second 12th note
         random_beat == random_beat + 0.667
     else:
