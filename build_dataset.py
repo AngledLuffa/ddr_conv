@@ -248,7 +248,7 @@ def extract_samples(dataset_files, simfile_map, num_samples):
             labels.append(label)
             samples.append(sample)
 
-    labels = torch.stack(labels)
+    labels = torch.tensor(labels)
     dataset = torch.stack(samples) 
     print("BUILT DATASET")
     print(dataset.shape, labels.shape)
