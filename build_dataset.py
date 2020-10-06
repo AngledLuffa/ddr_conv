@@ -194,11 +194,12 @@ def pick_sample(audio, sim):
             raise ValueError("Song too short to be useful")
 
     # TODO: avoid duplicates
+    label = 0
     random_beat = random.randint(min_beat, num_beats)
     mode = random.randint(1, 20)
-    if mode <= 10:        
+    if mode <= 10:
         # on a beat
-        pass
+        label = 1
     elif mode <= 12:
         # 8th note
         random_beat = random_beat + 0.5
@@ -221,10 +222,11 @@ def pick_sample(audio, sim):
     beat_time = sim.time(random_beat)
     # all songs have been translated to 44100 bitrate
     sample = int(beat_time * 44100)
-    return audio[:, sample-4000:sample+4000]
+    return label, audio[:, sample-4000:sample+4000]
     
 
 def extract_samples(dataset_files, simfile_map, num_samples):
+    labels = []
     samples = []
     for file_idx, filename in enumerate(dataset_files):
         print(filename)
@@ -242,13 +244,15 @@ def extract_samples(dataset_files, simfile_map, num_samples):
             end_sample = int(num_samples * (file_idx + 1) / len(simfile_map))
 
         for i in range(end_sample - start_sample):
-            samples.append(pick_sample(audio, sim))
+            label, sample = pick_sample(audio, sim)
+            labels.append(label)
+            samples.append(sample)
 
+    labels = torch.stack(labels)
     dataset = torch.stack(samples) 
     print("BUILT DATASET")
-    # TODO: should also have the labels
-    print(dataset.shape)
-    return dataset
+    print(dataset.shape, labels.shape)
+    return dataset, labels
 
 if __name__ == '__main__':
     # TODO: add command line args and make the seed a possible arg
@@ -273,6 +277,9 @@ if __name__ == '__main__':
     # correct BPM
     train_files, dev_files, test_files = split_dataset(useful_simfiles, train_size, dev_size, test_size)
 
-    train_set = extract_samples(train_files, simfile_map, train_samples)
-    dev_set = extract_samples(dev_files, simfile_map, dev_samples)
-    test_set = extract_samples(test_files, simfile_map, test_samples)
+    train_set, train_labels = extract_samples(train_files, simfile_map, train_samples)
+    dev_set, dev_labels = extract_samples(dev_files, simfile_map, dev_samples)
+    test_set, test_labels = extract_samples(test_files, simfile_map, test_samples)
+
+    # TODO: now we need to build a model
+
