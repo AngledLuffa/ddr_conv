@@ -76,7 +76,6 @@ class SimpleCNN(nn.Module):
         # Input will be 2 channels (L & R), 1x8000 audio
         # This layer will take it to 200x1x159
         # TODO: make some of these sizes, especially the channels, into parameters
-        # TODO: put things on the GPU when relevant
         self.base_layer = nn.Conv2d(in_channels=2,
                                     out_channels=200,
                                     stride=(1, 50),
