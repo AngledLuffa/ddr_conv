@@ -255,5 +255,5 @@ def extract_samples(dataset_files, simfile_map, num_samples):
     dataset = torch.stack(samples) 
     dataset = dataset.unsqueeze(2)
     logger.info("BUILT DATASET")
-    logger.info(dataset.shape, labels.shape)
+    logger.info("Dataset shape: {}  Labels shape: {}".format(dataset.shape, labels.shape))
     return dataset, labels
