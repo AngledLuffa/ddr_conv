@@ -58,6 +58,14 @@ def parse_args():
     parser.add_argument('--base_songs_dir', default='c:/Users/horat/Documents/DDR/Songs', help='Where to find the folders with the songs')
     parser.add_argument('--folders_file', default='folders.txt', help='A file with a list of the subdirectories containing usable songs')
 
+    parser.add_argument('--train_samples', default=20000, type=int, help='How many samples to extract from the training files')
+    parser.add_argument('--dev_samples',   default= 1000, type=int, help='How many samples to extract from the dev files')
+    parser.add_argument('--test_samples',  default= 2000, type=int, help='How many samples to extract from the test files')
+
+    parser.add_argument('--train_size', default=0.7, type=float, help='How many files to use for training')
+    parser.add_argument('--dev_size',   default=0.1, type=float, help='How many files to use for dev')
+    parser.add_argument('--test_size',  default=0.2, type=float, help='How many files to use for test')
+
     return parser.parse_args()
 
 
@@ -172,26 +180,16 @@ def main():
     seed = set_random_seed(args.seed, args.cuda)
     logger.info("Using random seed: %d" % seed)
 
-    # make these sizes arguments as well
-    train_size = 0.7
-    dev_size = 0.1
-    test_size = 0.2
-
-    # also should be parameters
-    train_samples = 10000
-    dev_samples = 1000
-    test_samples = 2000
-    
     useful_simfiles, simfile_map = build_dataset.collect_simfiles(args.base_songs_dir, args.folders_file)
 
     # we should log the test files so we know which files were
     # untouched when trying to check whether a model can identify a
     # correct BPM
-    train_files, dev_files, test_files = build_dataset.split_dataset(useful_simfiles, train_size, dev_size, test_size)
+    train_files, dev_files, test_files = build_dataset.split_dataset(useful_simfiles, args.train_size, args.dev_size, args.test_size)
 
-    train_set, train_labels = build_dataset.extract_samples(train_files, simfile_map, train_samples, args.cuda)
-    dev_set, dev_labels = build_dataset.extract_samples(dev_files, simfile_map, dev_samples, args.cuda)
-    test_set, test_labels = build_dataset.extract_samples(test_files, simfile_map, test_samples, args.cuda)
+    train_set, train_labels = build_dataset.extract_samples(train_files, simfile_map, args.train_samples, args.cuda)
+    dev_set, dev_labels = build_dataset.extract_samples(dev_files, simfile_map, args.dev_samples, args.cuda)
+    test_set, test_labels = build_dataset.extract_samples(test_files, simfile_map, args.test_samples, args.cuda)
 
     model = SimpleCNN()
 
