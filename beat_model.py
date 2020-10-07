@@ -47,6 +47,9 @@ def parse_args():
     parser.add_argument('--cuda', action='store_true', help='Use CUDA for training/testing', default=torch.cuda.is_available())
     parser.add_argument('--cpu', action='store_false', help='Ignore CUDA.', dest='cuda')
 
+    parser.add_argument('--base_songs_dir', default='c:/Users/horat/Documents/DDR/Songs', help='Where to find the folders with the songs')
+    parser.add_argument('--folders_file', default='folders.txt', help='A file with a list of the subdirectories containing usable songs')
+
     return parser.parse_args()
 
 
@@ -149,7 +152,7 @@ def main():
     dev_samples = 1000
     test_samples = 2000
     
-    useful_simfiles, simfile_map = build_dataset.collect_simfiles()
+    useful_simfiles, simfile_map = build_dataset.collect_simfiles(args.base_songs_dir, args.folders_file)
 
     # we should log the test files so we know which files were
     # untouched when trying to check whether a model can identify a

@@ -1,0 +1,19 @@
+1980s/
+1990s/
+2000s/
+2010s/
+chiptunes/
+ddr 5th mix/
+ddr 6th mix/
+european/
+iidx/
+jpop/
+kpop/
+mandarin/
+other asian/
+other bemani/
+pop'n music/
+pump it up/
+spanish/
+techno/
+video games/

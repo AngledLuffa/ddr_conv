@@ -77,9 +77,9 @@ def find_duplicates(simfiles):
     if found_duplicate:
         raise RuntimeError("Please eliminate any duplicates before proceeding")
 
-def get_candidate_directories(folders_file):
-    # TODO: make this a bit more general
-    return [x.strip() for x in open(folders_file).readlines()]
+def get_candidate_directories(base_songs_dir, folders_file):
+    subfolders = [x.strip() for x in open(folders_file).readlines()]
+    return [os.path.join(base_songs_dir, x) for x in subfolders]
 
 def print_unknown_types(simfiles):
     """
@@ -106,8 +106,8 @@ def filter_known_types(simfiles):
                 if os.path.splitext(f)[1] in known_extensions]
     return simfiles
 
-def collect_simfiles():
-    simfile_root_directories = get_candidate_directories("folders.txt")
+def collect_simfiles(base_songs_dir, folders_file):
+    simfile_root_directories = get_candidate_directories(base_songs_dir, folders_file)
     print(simfile_root_directories)
     known_simfiles = find_simfiles(simfile_root_directories)
     print("%d simfiles found" % len(known_simfiles))
