@@ -1,11 +1,54 @@
+import argparse
 import random
 
 import build_dataset
+
+import numpy as np
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+
+# TODO: use a logger instead of print()
+
+def set_random_seed(seed, cuda):
+    """
+    Set a random seed on all of the things which might need it.
+    torch, np, python random, and torch.cuda
+    """
+    if seed is None:
+        seed = random.randint(0, 1000000000)
+
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    if cuda:
+        torch.cuda.manual_seed(seed)
+    return seed
+
+def parse_args():
+    """
+    Add arguments for building the classifier.
+    Parses command line args and returns the result.
+    """
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--seed', default=None, type=int, help='Random seed for model')
+
+    parser.add_argument('--max_epochs', type=int, default=50, help='Number of epochs to run training')
+
+    parser.add_argument('--weight_decay', default=0.0001, type=float, help='Weight decay (eg, l2 reg) to use in the optimizer')
+    parser.add_argument('--lr', default=0.001, type=float, help='Learning rate to use in the optimizer')
+    parser.add_argument('--momentum', default=0.9, type=float, help='Momentum to use in the optimizer')
+
+    parser.add_argument('--batch_size', default=50, type=int, help='Batch size when training')
+
+    parser.add_argument('--cuda', action='store_true', help='Use CUDA for training/testing', default=torch.cuda.is_available())
+    parser.add_argument('--cpu', action='store_false', help='Ignore CUDA.', dest='cuda')
+
+    return parser.parse_args()
+
 
 class SimpleCNN(nn.Module):
     def __init__(self):
@@ -42,20 +85,17 @@ class SimpleCNN(nn.Module):
         out = out.squeeze()
         return out
 
-def train_model(model, train_set, train_labels, dev_set, dev_labels):
-    # TODO: make some of these args (and possibly use other loss / optimizer as args)
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9,
-                          weight_decay=0.0001)
+def train_model(model, args, train_set, train_labels, dev_set, dev_labels):
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
+                          weight_decay=args.weight_decay)
 
     loss_function = nn.CrossEntropyLoss()
 
-    # TODO: make the batch size a parameter
-    batch_size=50
+    batch_size=args.batch_size
 
     num_train = train_set.shape[0]
 
-    # TODO: make the number of epochs a parameter
-    for epoch in range(20):
+    for epoch in range(args.max_epochs):
         model.train()
         running_loss = 0.0
         epoch_loss = 0.0
@@ -91,11 +131,13 @@ def train_model(model, train_set, train_labels, dev_set, dev_labels):
               ((epoch + 1), epoch_loss))
 
     
-if __name__ == '__main__':
-    # TODO: add command line args and make the seed a possible arg
-    # although it should be noted that the dataset will frequently change.
-    # that might make it impossible to reproduce a dataset
-    random.seed(10000)
+def main():
+    args = parse_args()
+    
+    # It should be noted that the dataset will frequently change.
+    # That might make it impossible to reproduce a dataset
+    seed = set_random_seed(args.seed, args.cuda)
+    print("Using random seed: %d" % seed)
 
     # make these sizes arguments as well
     train_size = 0.7
@@ -120,5 +162,10 @@ if __name__ == '__main__':
     test_set, test_labels = build_dataset.extract_samples(test_files, simfile_map, test_samples)
 
     model = SimpleCNN()
-    train_model(model, train_set, train_labels, dev_set, dev_labels)
+    train_model(model, args, train_set, train_labels, dev_set, dev_labels)
+
+
+
+if __name__ == '__main__':
+    main()
 
