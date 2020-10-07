@@ -44,7 +44,7 @@ def parse_args():
 
     parser.add_argument('--seed', default=None, type=int, help='Random seed for model')
 
-    parser.add_argument('--max_epochs', type=int, default=50, help='Number of epochs to run training')
+    parser.add_argument('--epochs', type=int, default=50, help='Number of epochs to run training')
 
     parser.add_argument('--weight_decay', default=0.0001, type=float, help='Weight decay (eg, l2 reg) to use in the optimizer')
     parser.add_argument('--lr', default=0.001, type=float, help='Learning rate to use in the optimizer')
@@ -137,7 +137,7 @@ def train_model(model, args, train_set, train_labels, dev_set, dev_labels):
     num_train = train_set.shape[0]
     num_dev = dev_set.shape[0]
 
-    for epoch in range(args.max_epochs):
+    for epoch in range(args.epochs):
         model.train()
         running_loss = 0.0
         epoch_loss = 0.0
