@@ -12,6 +12,7 @@ notes on how to build the dataset:
   this way the tool is more likely to generalize by song
 """
 
+import logging
 import os
 import random
 
@@ -19,6 +20,8 @@ import torch
 import torchaudio
 
 import simfile
+
+logger = logging.getLogger('ddr')
 
 extensions = [".ssc", ".sm", ".dwi"]
 known_extensions = [".sm"]
@@ -70,8 +73,8 @@ def find_duplicates(simfiles):
     for filename in simfiles:
         directory, filename = os.path.split(filename)
         if directory in known_directories:
-            print("Found two simfiles in %s: %s and %s" %
-                  (directory, known_directories[directory], filename))
+            logger.warning("Found two simfiles in %s: %s and %s" %
+                           (directory, known_directories[directory], filename))
             found_duplicate = True
         known_directories[directory] = filename
     if found_duplicate:
@@ -85,8 +88,8 @@ def print_unknown_types(simfiles):
     """
     Print any simfiles which had an unknown extension
     """
-    print("Unknown: \n%s" % "\n  ".join(f for f in simfiles
-                                        if os.path.splitext(f)[1] not in known_extensions))
+    logger.info("\n  ".join(["Unknown:"] + [f for f in simfiles
+                                            if os.path.splitext(f)[1] not in known_extensions]))
     
 
 def is_useful(sim):
@@ -108,9 +111,9 @@ def filter_known_types(simfiles):
 
 def collect_simfiles(base_songs_dir, folders_file):
     simfile_root_directories = get_candidate_directories(base_songs_dir, folders_file)
-    print(simfile_root_directories)
+    logger.info(simfile_root_directories)
     known_simfiles = find_simfiles(simfile_root_directories)
-    print("%d simfiles found" % len(known_simfiles))
+    logger.info("%d simfiles found" % len(known_simfiles))
 
     # verify that no directories have 2 simfiles
     find_duplicates(known_simfiles)
@@ -118,7 +121,7 @@ def collect_simfiles(base_songs_dir, folders_file):
     # currently some simfile types cannot be read
     print_unknown_types(known_simfiles)
     known_simfiles = filter_known_types(known_simfiles)
-    print("%d .sm simfiles found" % len(known_simfiles))
+    logger.info("%d .sm simfiles found" % len(known_simfiles))
 
     simfile_map = {}
     for filename in known_simfiles:
@@ -128,7 +131,7 @@ def collect_simfiles(base_songs_dir, folders_file):
     useful_simfiles = [x for x in known_simfiles
                        if is_useful(simfile_map[x])]
 
-    print("%d simfiles to be used in the dataset" % len(useful_simfiles))
+    logger.info("%d simfiles to be used in the dataset" % len(useful_simfiles))
 
     return useful_simfiles, simfile_map
 
@@ -158,18 +161,18 @@ def load_normalized(music_file):
     something fake stereo if needed
     """
     audio, bitrate = torchaudio.load(music_file)
-    print("Audio shape: {}".format(audio.shape))
+    logger.info("Audio shape: {}".format(audio.shape))
     if bitrate != 44100:
-        print("Converting %s from %d to 44100" % (music_file, bitrate))
+        logger.info("Converting %s from %d to 44100" % (music_file, bitrate))
         transform = torchaudio.transforms.Resample(bitrate, 44100)
         audio = transform(audio)
-        print("New shape: {}".format(audio.shape))
+        logger.info("New shape: {}".format(audio.shape))
 
     if audio.shape[0] == 1:
         # It would appear either the reader is always reading things
         # in stereo even if they are mono files, or none of the
         # simfiles I have are mono, because this was never printed
-        print("WARNING: Simfile %s is mono, not stereo" % music_file)
+        logger.warning("Simfile %s is mono, not stereo" % music_file)
         audio = torch.cat((audio, audio), 0)
 
     return audio
@@ -229,13 +232,13 @@ def extract_samples(dataset_files, simfile_map, num_samples):
     labels = []
     samples = []
     for file_idx, filename in enumerate(dataset_files):
-        print(filename)
+        logger.info("Extracting from %s" % filename)
 
         music_file = simfile_map[filename].music
         sim = simfile_map[filename]
         audio = load_normalized(music_file)
         audio = featurize(audio)
-        print("Featurized shape: {}".format(audio.shape))
+        logger.info("Featurized shape: {}".format(audio.shape))
 
         start_sample = len(samples)
         if file_idx == len(dataset_files) - 1:
@@ -251,6 +254,6 @@ def extract_samples(dataset_files, simfile_map, num_samples):
     labels = torch.tensor(labels)
     dataset = torch.stack(samples) 
     dataset = dataset.unsqueeze(2)
-    print("BUILT DATASET")
-    print(dataset.shape, labels.shape)
+    logger.info("BUILT DATASET")
+    logger.info(dataset.shape, labels.shape)
     return dataset, labels

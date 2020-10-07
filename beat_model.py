@@ -1,4 +1,5 @@
 import argparse
+import logging
 import random
 
 import build_dataset
@@ -10,7 +11,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-# TODO: use a logger instead of print()
+logger = logging.getLogger('ddr')
+logger.setLevel(logging.INFO)
+
+log_handler = logging.StreamHandler()
+log_formatter = logging.Formatter(fmt="%(asctime)s %(levelname)s: %(message)s",
+                                  datefmt='%Y-%m-%d %H:%M:%S')
+log_handler.setFormatter(log_formatter)
+logger.addHandler(log_handler)
 
 def set_random_seed(seed, cuda):
     """
@@ -121,17 +129,17 @@ def train_model(model, args, train_set, train_labels, dev_set, dev_labels):
 
             running_loss += batch_loss.item()
             if ((batch_num + 1) * batch_size) % 2000 < batch_size: # print every 2000 items
-                print('[%d, %5d] average loss: %.3f' %
-                      (epoch + 1, ((batch_num + 1) * batch_size), running_loss / 2000))
+                logger.info('[%d, %5d] average loss: %.3f' %
+                            (epoch + 1, ((batch_num + 1) * batch_size), running_loss / 2000))
                 epoch_loss += running_loss
                 running_loss = 0.0
         # Add any leftover loss to the epoch_loss
         epoch_loss += running_loss
 
         # TODO: run the dev set
-        
-        print("Finished epoch %d.  Total loss: %f" %
-              ((epoch + 1), epoch_loss))
+
+        logger.info("Finished epoch %d.  Total loss: %f" %
+                    ((epoch + 1), epoch_loss))
 
     
 def main():
@@ -140,7 +148,7 @@ def main():
     # It should be noted that the dataset will frequently change.
     # That might make it impossible to reproduce a dataset
     seed = set_random_seed(args.seed, args.cuda)
-    print("Using random seed: %d" % seed)
+    logger.info("Using random seed: %d" % seed)
 
     # make these sizes arguments as well
     train_size = 0.7
