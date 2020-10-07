@@ -111,7 +111,7 @@ def filter_known_types(simfiles):
 
 def collect_simfiles(base_songs_dir, folders_file):
     simfile_root_directories = get_candidate_directories(base_songs_dir, folders_file)
-    logger.info(simfile_root_directories)
+    logger.info("\n  ".join(["Looking for simfiles in:"] + simfile_root_directories))
     known_simfiles = find_simfiles(simfile_root_directories)
     logger.info("%d simfiles found" % len(known_simfiles))
 
