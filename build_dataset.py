@@ -100,7 +100,7 @@ def is_useful(sim):
     # Currently Windows torchaudio is not compatible with mp3.  Either
     # needs sox or an update to soundfile which includes mp3 support
     # (such a thing is apparently planned)
-    if os.path.splitext(sim.music)[1] == '.mp3':
+    if os.path.splitext(sim.music)[1].lower() == '.mp3':
         return False
     return True
 
@@ -155,16 +155,20 @@ def split_dataset(useful_simfiles, train_size, dev_size, test_size):
 
     return train, dev, test
 
-def load_normalized(music_file):
+def load_normalized(music_file, cuda=False):
     """
     Normalize in a couple ways: convert to 44100 samples and make
     something fake stereo if needed
     """
     audio, bitrate = torchaudio.load(music_file)
+    if cuda:
+        audio = audio.cuda()
     logger.info("Audio shape: {}".format(audio.shape))
     if bitrate != 44100:
         logger.info("Converting %s from %d to 44100" % (music_file, bitrate))
         transform = torchaudio.transforms.Resample(bitrate, 44100)
+        if cuda:
+            transform = transform.cuda()
         audio = transform(audio)
         logger.info("New shape: {}".format(audio.shape))
 
@@ -228,7 +232,7 @@ def pick_sample(audio, sim):
     return label, audio[:, sample-4000:sample+4000]
     
 
-def extract_samples(dataset_files, simfile_map, num_samples):
+def extract_samples(dataset_files, simfile_map, num_samples, cuda=False):
     labels = []
     samples = []
     for file_idx, filename in enumerate(dataset_files):
@@ -236,7 +240,7 @@ def extract_samples(dataset_files, simfile_map, num_samples):
 
         music_file = simfile_map[filename].music
         sim = simfile_map[filename]
-        audio = load_normalized(music_file)
+        audio = load_normalized(music_file, cuda)
         audio = featurize(audio)
         logger.info("Featurized shape: {}".format(audio.shape))
 
@@ -252,6 +256,8 @@ def extract_samples(dataset_files, simfile_map, num_samples):
             samples.append(sample)
 
     labels = torch.tensor(labels)
+    if cuda:
+        labels = labels.cuda()
     dataset = torch.stack(samples) 
     dataset = dataset.unsqueeze(2)
     logger.info("BUILT DATASET")

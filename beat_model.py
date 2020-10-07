@@ -167,12 +167,15 @@ def main():
     # correct BPM
     train_files, dev_files, test_files = build_dataset.split_dataset(useful_simfiles, train_size, dev_size, test_size)
 
-    # TODO: put these tensors and the model on the GPU if available
-    train_set, train_labels = build_dataset.extract_samples(train_files, simfile_map, train_samples)
-    dev_set, dev_labels = build_dataset.extract_samples(dev_files, simfile_map, dev_samples)
-    test_set, test_labels = build_dataset.extract_samples(test_files, simfile_map, test_samples)
+    train_set, train_labels = build_dataset.extract_samples(train_files, simfile_map, train_samples, args.cuda)
+    dev_set, dev_labels = build_dataset.extract_samples(dev_files, simfile_map, dev_samples, args.cuda)
+    test_set, test_labels = build_dataset.extract_samples(test_files, simfile_map, test_samples, args.cuda)
 
     model = SimpleCNN()
+
+    if args.cuda:
+        model.cuda()
+
     train_model(model, args, train_set, train_labels, dev_set, dev_labels)
 
 
