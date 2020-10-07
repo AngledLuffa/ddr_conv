@@ -39,8 +39,7 @@ class SimpleCNN(nn.Module):
         base = self.dropout(F.relu(self.base_layer(inputs)))
         middle = self.dropout(F.relu(self.middle_layer(base)))
         out = self.output_layer(middle)
-        out.squeeze()
-        print(out.shape)
+        out = out.squeeze()
         return out
 
 def train_model(model, train_set, train_labels, dev_set, dev_labels):
@@ -64,7 +63,7 @@ def train_model(model, train_set, train_labels, dev_set, dev_labels):
         batch_starts = list(range(0, num_train, batch_size))
         random.shuffle(batch_starts)
 
-        for batch_start in batch_starts:
+        for batch_num, batch_start in enumerate(batch_starts):
             batch_end = min(batch_start + batch_size, num_train)
             batch = train_set[batch_start:batch_end, :, :, :]
             labels = train_labels[batch_start:batch_end]
@@ -78,13 +77,19 @@ def train_model(model, train_set, train_labels, dev_set, dev_labels):
             optimizer.step()
 
             running_loss += batch_loss.item()
-            if ((batch_num + 1) * args.batch_size) % 2000 < args.batch_size: # print every 2000 items
+            if ((batch_num + 1) * batch_size) % 2000 < batch_size: # print every 2000 items
+                print('[%d, %5d] average loss: %.3f' %
+                      (epoch + 1, ((batch_num + 1) * batch_size), running_loss / 2000))
                 epoch_loss += running_loss
                 running_loss = 0.0
         # Add any leftover loss to the epoch_loss
         epoch_loss += running_loss
 
         # TODO: run the dev set
+        
+        print("Finished epoch %d.  Total loss: %f" %
+              ((epoch + 1), epoch_loss))
+
     
 if __name__ == '__main__':
     # TODO: add command line args and make the seed a possible arg
@@ -113,7 +118,7 @@ if __name__ == '__main__':
     train_set, train_labels = build_dataset.extract_samples(train_files, simfile_map, train_samples)
     dev_set, dev_labels = build_dataset.extract_samples(dev_files, simfile_map, dev_samples)
     test_set, test_labels = build_dataset.extract_samples(test_files, simfile_map, test_samples)
-    
+
     model = SimpleCNN()
     train_model(model, train_set, train_labels, dev_set, dev_labels)
 
