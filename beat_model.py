@@ -200,7 +200,8 @@ def main():
 
     train_model(model, args, train_set, train_labels, dev_set, dev_labels)
 
-
+    # TODO: need to be able to save & load a model
+    # stanza's models have some good examples of this
 
 if __name__ == '__main__':
     main()
