@@ -1,2 +1,5 @@
 # emacs backups
 *~
+
+# python stuff
+__pycache__/**
