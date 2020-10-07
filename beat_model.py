@@ -96,6 +96,28 @@ class SimpleCNN(nn.Module):
         out = out.squeeze()
         return out
 
+def score_dataset(model, args, dataset, labels):
+    model.eval()
+
+    num_data = dataset.shape[0]
+
+    correct = 0
+    batch_size=args.batch_size
+    for batch_start in range(0, num_data, batch_size):
+        batch_end = min(batch_start + batch_size, num_data)
+        batch = dataset[batch_start:batch_end, :, :, :]
+        correct_labels = labels[batch_start:batch_end]
+
+        output = model(batch)
+        # TODO: there is probably a convenient vector math way of doing this
+        for i in range(batch_end - batch_start):
+            predicted = torch.argmax(output[i])
+            predicted_label = predicted.item()
+            if predicted_label == correct_labels[i]:
+                correct = correct + 1
+
+    return correct
+    
 def train_model(model, args, train_set, train_labels, dev_set, dev_labels):
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
                           weight_decay=args.weight_decay)
@@ -105,6 +127,7 @@ def train_model(model, args, train_set, train_labels, dev_set, dev_labels):
     batch_size=args.batch_size
 
     num_train = train_set.shape[0]
+    num_dev = dev_set.shape[0]
 
     for epoch in range(args.max_epochs):
         model.train()
@@ -136,10 +159,9 @@ def train_model(model, args, train_set, train_labels, dev_set, dev_labels):
         # Add any leftover loss to the epoch_loss
         epoch_loss += running_loss
 
-        # TODO: run the dev set
-
-        logger.info("Finished epoch %d.  Total loss: %f" %
-                    ((epoch + 1), epoch_loss))
+        correct = score_dataset(model, args, dev_set, dev_labels)
+        logger.info("Finished epoch %d.  Correct: %d of %d.  Total loss: %f" %
+                    ((epoch + 1), correct, num_dev, epoch_loss))
 
     
 def main():
